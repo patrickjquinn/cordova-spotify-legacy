@@ -65,6 +65,18 @@ export function play(trackUri: string, auth: AuthorizationData, positionMs?: num
     return exec('play', [trackUri, auth.token, auth.clientId, positionMs || 0]);
 }
 
+export async function isPaused(): Promise<boolean> {
+    return exec('isPaused');
+}
+
+export async function getDuration(): Promise<number> {
+    return exec('getDuration');
+}
+
+export async function getPlaybackState(): Promise<any> {
+    return exec('getPlaybackState');
+}
+
 /**
  * Obtains the playback position in milliseconds.
  *
@@ -73,7 +85,7 @@ export function play(trackUri: string, auth: AuthorizationData, positionMs?: num
  * @returns {Promise<number>} A promise with the playback position.
  * @async
  */
-export function getPosition(): Promise<number> {
+export async function getPosition(): Promise<number> {
     return exec('getPosition');
 }
 
@@ -85,7 +97,7 @@ export function getPosition(): Promise<number> {
  * @returns {Promise<void>} A promise that resolves when the playback has been paused.
  * @async
  */
-export function pause(): Promise<void> {
+export async function pause(): Promise<void> {
     return exec('pause');
 }
 
@@ -98,7 +110,7 @@ export function pause(): Promise<void> {
  * @returns {Promise<void>} A promise that resolves when the playback has been resumed.
  * @async
  */
-export function resume(): Promise<void> {
+export async function resume(): Promise<void> {
     return exec('resume');
 }
 
@@ -115,7 +127,7 @@ export function resume(): Promise<void> {
  * @returns {Promise<void>} A promise that resolves when the seek has been done.
  * @async
  */
-export function seekTo(positionMs: number): Promise<void> {
+export async function seekTo(positionMs: number): Promise<void> {
     if (positionMs < 0) {
         throw new RangeError("positionMs parameter is < 0");
     }

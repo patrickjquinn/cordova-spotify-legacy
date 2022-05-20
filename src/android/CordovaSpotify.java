@@ -2,33 +2,22 @@ package rocks.festify;
 
 import android.util.Log;
 
-import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.PluginResult;
+import com.spotify.sdk.android.player.Config;
+import com.spotify.sdk.android.player.Error;
+import com.spotify.sdk.android.player.PlaybackState;
+import com.spotify.sdk.android.player.Player;
+import com.spotify.sdk.android.player.Spotify;
+import com.spotify.sdk.android.player.SpotifyPlayer;
 
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.text.SimpleDateFormat;
-
-import android.app.Activity;
-import android.content.Intent;
-
-import com.spotify.sdk.android.player.Config;
-import com.spotify.sdk.android.player.ConnectionStateCallback;
-import com.spotify.sdk.android.player.Error;
-import com.spotify.sdk.android.player.Player;
-import com.spotify.sdk.android.player.PlaybackState;
-import com.spotify.sdk.android.player.Spotify;
-import com.spotify.sdk.android.player.SpotifyPlayer;
-
-import rocks.festify.ConnectionEventsHandler;
-import rocks.festify.PlayerEventsHandler;
 
 public class CordovaSpotify extends CordovaPlugin {
     private static final int LOGIN_REQUEST_CODE = 8139;
@@ -47,6 +36,8 @@ public class CordovaSpotify extends CordovaPlugin {
         if ("getPosition".equals(action)) {
             this.getPosition(callbackContext);
             return true;
+        } else if ("isPaused".equals(action)) {
+            this.isPaused(callbackContext);
         } else if ("play".equals(action)) {
             String trackUri = args.getString(0);
             String accessToken = args.getString(1);
@@ -67,14 +58,91 @@ public class CordovaSpotify extends CordovaPlugin {
             int position = args.getInt(0);
             this.seekTo(callbackContext, position);
             return true;
-        } else {
+
+        } else if ("getDuration".equals(action)) {
+            this.getDuration(callbackContext);
+            return true;
+        } else if ("getPlaybackState".equals(action)) {
+            this.getPlaybackState(callbackContext);
+            return true;
+        } else if ("getFucked".equals(action))
+//            this.getPlaybackState(callbackContext);
+            return true;
+        else {
             return false;
         }
+        return true;
     }
 
     /*
      * API Functions
      */
+
+    private void getPlaybackState(final CallbackContext callbackContext) {
+        JSONObject playbackStateJson = new JSONObject();
+
+        if  (player != null) {
+            PlaybackState playbackState = player.getPlaybackState();
+            try {
+                long position = this.player.getPlaybackState().positionMs;
+                playbackStateJson.put("isPlaying", playbackState.isPlaying);
+                playbackStateJson.put("position", position);
+            } catch (JSONException e) {
+                Log.e(TAG, "Error creating JSON object for playback state");
+            }
+            PluginResult res = new PluginResult(PluginResult.Status.OK, playbackStateJson);
+                callbackContext.sendPluginResult(res);
+        } else {
+//            playbackStateJson.put("isPlaying", false);
+//            playbackStateJson.put("position", 0);
+            PluginResult res = new PluginResult(PluginResult.Status.OK, playbackStateJson);
+            callbackContext.sendPluginResult(res);
+        }
+    }
+
+    private void getDuration(final CallbackContext callbackContext) {
+        SpotifyPlayer player = this.player;
+        PluginResult res = null;
+        if (player != null) {
+            if (this.player.getMetadata().currentTrack != null){
+                long position = this.player.getMetadata().currentTrack.durationMs;
+
+                if (position > 0) {
+                    position = position / 1000;
+                }
+                res = new PluginResult(PluginResult.Status.OK, (float)position);
+            } else {
+                res = new PluginResult(PluginResult.Status.OK, 0);
+            }
+            callbackContext.sendPluginResult(res);
+        } else {
+            res = new PluginResult(PluginResult.Status.OK, 0);
+            callbackContext.sendPluginResult(res);
+        }
+    }
+
+    private void isPaused(final CallbackContext callbackContext) {
+        SpotifyPlayer player = this.player;
+        PluginResult res = null;
+        if (player != null) {
+            PlaybackState state = player.getPlaybackState();
+
+            if (state == null) {
+                String msg = "Received null from SpotifyPlayer.getPlaybackState()!";
+                Log.e(TAG, msg);
+
+                JSONObject descr = this.makeError("unknown", msg);
+                callbackContext.error(descr);
+                return;
+            }
+
+            res = new PluginResult(PluginResult.Status.OK, (boolean)!state.isPlaying);
+        } else {
+            res = new PluginResult(PluginResult.Status.OK, false);
+        }
+
+        callbackContext.sendPluginResult(res);
+    }
 
     private void getPosition(final CallbackContext callbackContext) {
         SpotifyPlayer player = this.player;

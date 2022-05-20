@@ -6,7 +6,9 @@ repositories {
 }
 
 dependencies {
-    compile(name:'spotify-sdk', ext:'aar')
+    implementation fileTree(dir: 'src/main/libs', include: ['*.aar'])
+    implementation fileTree(dir: 'libs', include: ['*.aar'])
+
 }
 
 android {

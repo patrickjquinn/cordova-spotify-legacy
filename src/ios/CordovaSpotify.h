@@ -19,6 +19,9 @@
 
     - (void) pluginInitialize;
 
+    - (void) getPlaybackState:(CDVInvokedUrlCommand*)command;    
+    - (void) getDuration: (CDVInvokedUrlCommand*)command;
+    - (void) isPaused: (CDVInvokedUrlCommand*)command;
     - (void) play:(CDVInvokedUrlCommand*)command;
     - (void) pause:(CDVInvokedUrlCommand*)command;
     - (void) resume:(CDVInvokedUrlCommand*)command;

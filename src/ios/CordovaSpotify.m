@@ -5,7 +5,7 @@
 
 - (void)pluginInitialize {
     // Tell iOS to play audio even in background and when the ringer is silent
-    [[AVAudioSession sharedInstance] setCategory: AVAudioSessionCategoryPlayback error: nil];
+    // [[AVAudioSession sharedInstance] setCategory: AVAudioSessionCategoryPlayback error: nil];
 
     // Initialize delegates for event handling
     __weak id <CDVCommandDelegate> _commandDelegate = self.commandDelegate;
@@ -160,6 +160,24 @@
  * API FUNCTIONS
  */
 
+- (void) isPaused: (CDVInvokedUrlCommand*)command {
+    BOOL paused = ![[self.player playbackState] isPlaying];
+    CDVPluginResult *result = [CDVPluginResult
+            resultWithStatus: CDVCommandStatus_OK
+             messageAsBool: paused];
+
+    [self.commandDelegate sendPluginResult: result callbackId: command.callbackId];
+}
+
+- (void) getDuration: (CDVInvokedUrlCommand*)command {
+    double duration = self.player.metadata.currentTrack.duration;
+    CDVPluginResult *result = [CDVPluginResult
+            resultWithStatus: CDVCommandStatus_OK
+             messageAsDouble: duration];
+
+    [self.commandDelegate sendPluginResult: result callbackId: command.callbackId];
+}
+
 - (void) getPosition:(CDVInvokedUrlCommand*)command {
     double durationMs = 0.0;
     SPTAudioStreamingController* player = self.player;
@@ -273,9 +291,42 @@
     [self.commandDelegate sendPluginResult: result callbackId: command.callbackId];
 }
 
+- (void) getPlaybackState:(CDVInvokedUrlCommand*)command {
+    SPTAudioStreamingController* player = self.player;
+    if (!player) {
+        [self sendResultForCommand: command
+                     withErrorType: @"not_playing"
+                          andDescr: @"The Spotify SDK currently does not play music. Play a track to get its playback state."
+                        andSuccess: nil];
+        return;
+    }
+
+    SPTPlaybackState* state = [player playbackState];
+    
+    NSNumber *playing = @0;
+    NSNumber *position = @0;
+    
+    if (state.isPlaying){
+        playing = @1;
+    }
+    
+    if (state.position && state.position > 0) {
+        position = [NSNumber numberWithDouble:state.position];
+    }
+
+    CDVPluginResult *result = [CDVPluginResult
+            resultWithStatus: CDVCommandStatus_OK
+             messageAsDictionary: @{
+                @"isPlaying": playing,
+                @"position": position
+            }];
+
+    [self.commandDelegate sendPluginResult: result callbackId: command.callbackId];
+}
+
 - (void) seekTo:(CDVInvokedUrlCommand*)command {
     SPTAudioStreamingController* player = self.player;
-    if (!player || ![[player playbackState] isPlaying]) {
+    if (!player) {
         [self sendResultForCommand: command
                      withErrorType: @"not_playing"
                           andDescr: @"The Spotify SDK currently does not play music. Play a track to seek."
